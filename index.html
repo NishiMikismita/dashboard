@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Customer / Outlet Master Requests Dashboard</title>
+    <meta name="description" content="Customer / Outlet Master Requests Dashboard" />
+    <style>
+      :root{
+        --bg: #0b1020;
+        --panel: rgba(255,255,255,.06);
+        --panel2: rgba(255,255,255,.085);
+        --border: rgba(255,255,255,.12);
+        --text: rgba(255,255,255,.92);
+        --muted: rgba(255,255,255,.68);
+        --muted2: rgba(255,255,255,.55);
+        --accent: #7c3aed;
+        --accent2: #22c55e;
+        --danger: #ef4444;
+        --warn: #f59e0b;
+        --shadow: 0 14px 40px rgba(0,0,0,.45);
+        --radius: 16px;
+        --radius2: 12px;
+        --gap: 14px;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      }
+
+      *{ box-sizing: border-box; }
+      html,body{ height:100%; }
+      body{
+        margin:0;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(900px 500px at 15% 10%, rgba(124,58,237,.22), transparent 58%),
+          radial-gradient(900px 500px at 80% 0%, rgba(34,197,94,.18), transparent 60%),
+          radial-gradient(1100px 700px at 70% 90%, rgba(59,130,246,.14), transparent 62%),
+          linear-gradient(180deg, #070a15, #0b1020 35%, #070a15);
+      }
+
+      .wrap{
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        padding: 18px 14px 42px;
+      }
+
+      header{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap: 14px;
+        padding: 18px 18px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        position: sticky;
+        top: 10px;
+        z-index: 50;
+        backdrop-filter: blur(10px);
+      }
+
+      .title{
+        display:flex;
+        flex-direction:column;
+        gap: 4px;
+        min-width: 280px;
+      }
+      .title h1{
+        margin:0;
+        font-size: 18px;
+        letter-spacing: .2px;
+      }
+      .subtitle{
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.35;
+      }
+      .subtitle code{
+        font-family: var(--mono);
+        font-size: 12px;
+        color: rgba(255,255,255,.82);
+        background: rgba(255,255,255,.07);
+        border: 1px solid rgba(255,255,255,.12);
+        padding: 1px 6px;
+        border-radius: 10px;
+      }
+
+      .controls{
+        display:flex;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+        align-items:flex-start;
+        gap: 10px;
+      }
+
+      .btn, .chip, select, input[type="file"], input[type="search"]{
+        font: inherit;
+      }
+      .btn{
+        appearance: none;
+        border: 1px solid rgba(255,255,255,.16);
+        background: rgba(255,255,255,.08);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: transform .08s ease, background .2s ease, border-color .2s ease;
+        display:inline-flex;
+        align-items:center;
+        gap: 8px;
+        user-select: none;
+      }
+      .btn:hover{ background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.22); }
+      .btn:active{ transform: translateY(1px); }
+      .btn.primary{
+        border-color: rgba(124,58,237,.45);
+        background: linear-gradient(180deg, rgba(124,58,237,.22), rgba(124,58,237,.12));
+      }
+      .btn.primary:hover{ border-color: rgba(124,58,237,.7); }
+      .btn.danger{
+        border-color: rgba(239,68,68,.5);
+        background: linear-gradient(180deg, rgba(239,68,68,.18), rgba(239,68,68,.09));
+      }
+
+      .small{
+        font-size: 12px;
+        color: var(--muted2);
+      }
+      .statusline{
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+        align-items:flex-end;
+        text-align:right;
+        min-width: 260px;
+      }
+      .statusRow{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+      .statusline .pill{
+        display:inline-flex;
+        align-items:center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.18);
+        color: rgba(255,255,255,.86);
+        font-size: 12px;
+      }
+      .dot{
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.35);
+        box-shadow: 0 0 0 3px rgba(255,255,255,.08);
+      }
+      .dot.ok{ background: var(--accent2); box-shadow: 0 0 0 3px rgba(34,197,94,.18); }
+      .dot.warn{ background: var(--warn); box-shadow: 0 0 0 3px rgba(245,158,11,.18); }
+      .dot.bad{ background: var(--danger); box-shadow: 0 0 0 3px rgba(239,68,68,.18); }
+
+      main{
+        margin-top: 14px;
+        display:flex;
+        flex-direction:column;
+        gap: var(--gap);
+      }
+
+      .panel{
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.05);
+        border-radius: var(--radius);
+        box-shadow: 0 10px 28px rgba(0,0,0,.35);
+        overflow:hidden;
+      }
+      .panelHead{
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255,255,255,.10);
+        display:flex;
+        gap: 12px;
+        align-items:flex-end;
+        justify-content:space-between;
+        flex-wrap:wrap;
+      }
+      .panelHead h2{
+        margin:0;
+        font-size: 14px;
+        letter-spacing: .2px;
+      }
+      .panelHead .hint{
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .panelActions{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+      .panelBody{ padding: 14px 16px 16px; }
+
+      .gridKpis{
+        display:grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+      .kpi{
+        grid-column: span 3;
+        border: 1px solid rgba(255,255,255,.10);
+        background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+        border-radius: var(--radius2);
+        padding: 12px 12px 11px;
+        min-height: 86px;
+      }
+      .kpi .label{
+        font-size: 12px;
+        color: var(--muted);
+        display:flex;
+        justify-content:space-between;
+        gap: 10px;
+      }
+      .kpi .value{
+        margin-top: 8px;
+        font-size: 22px;
+        letter-spacing: .2px;
+        font-weight: 700;
+      }
+      .kpi .sub{
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted2);
+        line-height: 1.25;
+      }
+      .kpi .trend{
+        font-family: var(--mono);
+        font-size: 11px;
+        color: rgba(255,255,255,.66);
+        white-space: nowrap;
+      }
+
+      .filters{
+        display:grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+      .f{
+        grid-column: span 3;
+        display:flex;
+        flex-direction:column;
+        gap: 6px;
+      }
+      .f label{
+        font-size: 12px;
+        color: var(--muted);
+      }
+      select, input[type="search"]{
+        width: 100%;
+        padding: 10px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(0,0,0,.20);
+        color: var(--text);
+        outline: none;
+      }
+      select:focus, input[type="search"]:focus{
+        border-color: rgba(124,58,237,.55);
+        box-shadow: 0 0 0 4px rgba(124,58,237,.16);
+      }
+
+      .charts{
+        display:grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 12px;
+      }
+      .chartCard{
+        grid-column: span 6;
+        border: 1px solid rgba(255,255,255,.10);
+        background: rgba(0,0,0,.16);
+        border-radius: var(--radius2);
+        padding: 12px;
+        min-height: 320px;
+      }
+      .chartCard h3{
+        margin: 0 0 8px;
+        font-size: 13px;
+        color: rgba(255,255,255,.86);
+        letter-spacing: .2px;
+      }
+      .chartWrap{
+        position: relative;
+        height: 260px;
+      }
+
+      .tableWrap{
+        display:flex;
+        flex-direction:column;
+        gap: 10px;
+      }
+      .tableBar{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+        flex-wrap:wrap;
+      }
+      .tableBar .right{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+      }
+      .table{
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,.10);
+      }
+      .table thead th{
+        text-align:left;
+        font-size: 12px;
+        color: rgba(255,255,255,.80);
+        background: rgba(255,255,255,.06);
+        border-bottom: 1px solid rgba(255,255,255,.10);
+        padding: 10px 10px;
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(6px);
+        z-index: 2;
+      }
+      .table tbody td{
+        padding: 10px 10px;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+        color: rgba(255,255,255,.82);
+        font-size: 12px;
+        vertical-align: top;
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .table tbody tr:hover td{
+        background: rgba(124,58,237,.08);
+      }
+      .tableScroll{
+        max-height: 420px;
+        overflow:auto;
+      }
+
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        color: rgba(255,255,255,.82);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .badge.good{ border-color: rgba(34,197,94,.28); background: rgba(34,197,94,.10); }
+      .badge.warn{ border-color: rgba(245,158,11,.30); background: rgba(245,158,11,.10); }
+      .badge.bad{ border-color: rgba(239,68,68,.30); background: rgba(239,68,68,.10); }
+
+      .muted{ color: var(--muted); }
+      .mono{ font-family: var(--mono); }
+
+      @media (max-width: 1100px){
+        .kpi{ grid-column: span 4; }
+        .f{ grid-column: span 4; }
+      }
+      @media (max-width: 820px){
+        header{ position: static; }
+        .statusline{ min-width: unset; align-items:flex-start; text-align:left; }
+        .statusRow{ justify-content:flex-start; }
+        .controls{ justify-content:flex-start; }
+        .kpi{ grid-column: span 6; }
+        .f{ grid-column: span 6; }
+        .chartCard{ grid-column: span 12; }
+      }
+      @media (max-width: 520px){
+        .kpi{ grid-column: span 12; }
+        .f{ grid-column: span 12; }
+        .table tbody td{ max-width: 220px; }
+      }
+
+      /* ---------- Password gate ---------- */
+      .authGate{
+        min-height: 100vh;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding: 24px 14px;
+      }
+      .authCard{
+        width: min(520px, 100%);
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px 18px 16px;
+        backdrop-filter: blur(10px);
+      }
+      .authTitle{
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: .2px;
+      }
+      .authHint{
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.35;
+      }
+      .authRow{
+        margin-top: 14px;
+        display:flex;
+        gap: 10px;
+        align-items:center;
+        flex-wrap:wrap;
+      }
+      .authRow input[type="password"]{
+        flex: 1 1 240px;
+      }
+      .authErr{
+        margin-top: 10px;
+        color: rgba(255,255,255,.88);
+        background: rgba(239,68,68,.12);
+        border: 1px solid rgba(239,68,68,.28);
+        border-radius: 12px;
+        padding: 10px 10px;
+        font-size: 12.5px;
+        display:none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="authGate" id="authGate">
+      <div class="authCard">
+        <h2 class="authTitle">Enter password</h2>
+        <form id="authForm" autocomplete="off">
+          <div class="authRow">
+            <input id="authPwd" type="password" placeholder="Password" aria-label="Password" />
+            <button class="btn primary" type="submit">Unlock</button>
+          </div>
+          <div class="authErr" id="authErr">Incorrect password.</div>
+        </form>
+      </div>
+    </div>
+
+    <div class="wrap" id="appWrap" style="display:none">
+      <header>
+        <div class="title">
+          <h1>Customer / Outlet Master Requests Dashboard</h1>
+
+        </div>
+
+        <div class="statusline">
+          <div class="statusRow">
+            <div class="pill" id="loadPill"><span class="dot" id="loadDot"></span><span id="loadText">Not loaded</span></div>
+            <button class="btn primary" id="btnReload" type="button" title="Re-fetch the latest CSV data">
+              Reload data
+            </button>
+          </div>
+          <div class="small" id="loadMeta">—</div>
+        </div>
+      </header>
+
+      <main>
+        <section class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Filters</h2>
+              <div class="hint">Options auto-populate from the CSV values.</div>
+            </div>
+            <div class="panelActions">
+              <div class="hint">Tip: hold Ctrl/⌘ for multi-select.</div>
+              <button class="btn danger" id="btnReset" type="button" title="Clear filters">
+                Reset filters
+              </button>
+            </div>
+          </div>
+          <div class="panelBody">
+            <div class="filters">
+              <div class="f">
+                <label for="fRegion">Region</label>
+                <select id="fRegion" multiple size="6"></select>
+              </div>
+              <div class="f">
+                <label for="fStatus">Current Status</label>
+                <select id="fStatus" multiple size="6"></select>
+              </div>
+              <div class="f">
+                <label for="fCreatedFrom">Created From</label>
+                <select id="fCreatedFrom" multiple size="6"></select>
+              </div>
+              <div class="f">
+                <label for="fOutlet">Type Of Outlet</label>
+                <select id="fOutlet" multiple size="6"></select>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>KPIs</h2>
+              <div class="hint">Based on current filters.</div>
+            </div>
+            <div class="hint" id="filterSummary">No filters applied.</div>
+          </div>
+          <div class="panelBody">
+            <div class="gridKpis" id="kpiGrid"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Charts</h2>
+              <div class="hint">Top categories adapt to new values automatically.</div>
+            </div>
+            <div class="hint">All charts respect filters.</div>
+          </div>
+          <div class="panelBody">
+            <div class="charts">
+              <div class="chartCard">
+                <h3>Status distribution</h3>
+                <div class="chartWrap"><canvas id="cStatus"></canvas></div>
+              </div>
+              <div class="chartCard">
+                <h3>Region (top 10 by requests)</h3>
+                <div class="chartWrap"><canvas id="cRegion"></canvas></div>
+              </div>
+              <div class="chartCard">
+                <h3>Nature Of Business (top 10)</h3>
+                <div class="chartWrap"><canvas id="cNob"></canvas></div>
+              </div>
+              <div class="chartCard">
+                <h3>Type Of Outlet (top 10)</h3>
+                <div class="chartWrap"><canvas id="cOutlet"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panelHead">
+            <div>
+              <h2>Data preview</h2>
+              <div class="hint">Shows a sample of filtered rows.</div>
+            </div>
+            <div class="hint" id="tableCount">—</div>
+          </div>
+          <div class="panelBody">
+            <div class="tableWrap">
+              <div class="tableBar">
+                <div class="small">
+                  <span class="badge" id="dqBadge">DQ</span>
+                  <span class="muted" id="dqText">—</span>
+                </div>
+                <div class="right">
+                  <input id="q" type="search" placeholder="Search in preview (name, stockist, salesman, status…)" />
+                  <button class="btn" id="btnExport" type="button" title="Export filtered rows as CSV">
+                    Export filtered data (CSV)
+                  </button>
+                </div>
+              </div>
+
+              <div class="tableScroll">
+                <table class="table" id="tbl">
+                  <thead><tr id="tblHead"></tr></thead>
+                  <tbody id="tblBody"></tbody>
+                </table>
+              </div>
+              
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- CDNs (no bundler) -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    
+
+    <script>
+      // ---------- Config ----------
+      const DATA_URL = "https://docs.google.com/spreadsheets/d/1DcAqqu2ErJWkzamCX4pSG6rFKAmjNXl_q7dl_MTAlpk/export?format=csv";
+
+      // ---------- Fixed columns ----------
+      const COL = {
+        region: "Region",
+        stockistCode: "Stockist Code",
+        stockistName: "Stockist Name",
+        companyCustomerCode: "Company Customer Code",
+        customerCode: "Customer Code",
+        customerName: "Customer Name",
+        remarks: "Remarks",
+        createdFrom: "Created From",
+        createdBy: "Created By",
+        createdDate: "Created Date",
+        status: "Current Status",
+        dupCheckDate: "CMC DuplicacyCheckDate",
+        zsmDecisionDate: "ZSM ApprovedOrRejectDate",
+        centralDecisionDate: "CentralUserApprovedOrRejectDate",
+        compCode: "CompCode",
+        salesman: "SalesmanName",
+        soCode: "SoCode",
+        exception: "Exception",
+        nob: "Nature Of Business",
+        outlet: "Type Of Outlet",
+      };
+
+      // ---------- State ----------
+      /** @type {Array<Record<string,string>>} */
+      let rows = [];
+      /** @type {Array<Record<string,string>>} */
+      let filtered = [];
+
+      let charts = {
+        status: null,
+        region: null,
+        nob: null,
+        outlet: null,
+      };
+
+      const el = {
+        btnReload: document.getElementById("btnReload"),
+        btnReset: document.getElementById("btnReset"),
+        btnExport: document.getElementById("btnExport"),
+
+        loadDot: document.getElementById("loadDot"),
+        loadText: document.getElementById("loadText"),
+        loadMeta: document.getElementById("loadMeta"),
+        filterSummary: document.getElementById("filterSummary"),
+
+        kpiGrid: document.getElementById("kpiGrid"),
+
+        fRegion: document.getElementById("fRegion"),
+        fStatus: document.getElementById("fStatus"),
+        fCreatedFrom: document.getElementById("fCreatedFrom"),
+        fOutlet: document.getElementById("fOutlet"),
+        q: document.getElementById("q"),
+
+        cStatus: document.getElementById("cStatus"),
+        cRegion: document.getElementById("cRegion"),
+        cNob: document.getElementById("cNob"),
+        cOutlet: document.getElementById("cOutlet"),
+
+        tblHead: document.getElementById("tblHead"),
+        tblBody: document.getElementById("tblBody"),
+        tableCount: document.getElementById("tableCount"),
+
+        dqBadge: document.getElementById("dqBadge"),
+        dqText: document.getElementById("dqText"),
+      };
+
+      // ---------- Utilities ----------
+      function nowStr(){
+        const d = new Date();
+        return d.toLocaleString(undefined, { year:"numeric", month:"short", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit" });
+      }
+
+      function norm(v){
+        if (v === null || v === undefined) return "";
+        return String(v).trim();
+      }
+
+      function val(row, key){
+        return norm(row?.[key]);
+      }
+
+      function emptyToLabel(s, label="(Blank)"){
+        const t = norm(s);
+        return t ? t : label;
+      }
+
+      function uniqCount(arr){
+        return new Set(arr.filter(Boolean)).size;
+      }
+
+      function fmtInt(n){
+        return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n || 0);
+      }
+
+      function fmtPct(x){
+        if (!isFinite(x)) return "0%";
+        return new Intl.NumberFormat(undefined, { style:"percent", maximumFractionDigits: 1 }).format(x);
+      }
+
+      function isRejected(status){
+        const s = norm(status).toLowerCase();
+        return s.includes("reject");
+      }
+
+      function isWaiting(status){
+        const s = norm(status).toLowerCase();
+        return s.includes("waiting") || s.includes("pending");
+      }
+
+      function hasDateLike(s){
+        // Values vary; we treat any non-empty as "present", but this helps labeling.
+        return !!norm(s);
+      }
+
+      function topNCountBy(rows, getter, n=10){
+        const m = new Map();
+        for (const r of rows){
+          const k = emptyToLabel(getter(r));
+          m.set(k, (m.get(k) || 0) + 1);
+        }
+        return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n);
+      }
+
+      function countBy(rows, getter){
+        const m = new Map();
+        for (const r of rows){
+          const k = emptyToLabel(getter(r));
+          m.set(k, (m.get(k) || 0) + 1);
+        }
+        return m;
+      }
+
+      function selectedValues(selectEl){
+        return Array.from(selectEl.selectedOptions).map(o => o.value);
+      }
+
+      function setSelectOptions(selectEl, values){
+        const prev = new Set(selectedValues(selectEl));
+        selectEl.innerHTML = "";
+        for (const v of values){
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          if (prev.has(v)) opt.selected = true;
+          selectEl.appendChild(opt);
+        }
+      }
+
+      function clipLabel(s, max=22){
+        const t = String(s);
+        return t.length > max ? t.slice(0, max-1) + "…" : t;
+      }
+
+      function colorRamp(k){
+        // deterministic pleasant colors (dark-friendly)
+        const palette = [
+          "#8b5cf6","#22c55e","#38bdf8","#f59e0b","#ef4444",
+          "#e879f9","#a3e635","#fb7185","#60a5fa","#f97316",
+          "#34d399","#c084fc","#facc15","#4ade80","#94a3b8"
+        ];
+        return palette[k % palette.length];
+      }
+
+      function destroyChart(ch){
+        if (ch && typeof ch.destroy === "function") ch.destroy();
+      }
+
+      function safeRowKey(r){
+        // best-effort unique identifier for duplicates tracking
+        return [
+          val(r, COL.companyCustomerCode),
+          val(r, COL.stockistCode),
+          val(r, COL.customerName),
+          val(r, COL.createdFrom),
+          val(r, COL.salesman),
+        ].join("|");
+      }
+
+      // ---------- Loading ----------
+      function setLoadState(kind, text, meta){
+        el.loadText.textContent = text;
+        el.loadMeta.textContent = meta || "";
+        el.loadDot.className = "dot " + (kind === "ok" ? "ok" : kind === "warn" ? "warn" : kind === "bad" ? "bad" : "");
+      }
+
+      function parseCsvText(csvText){
+        return new Promise((resolve, reject) => {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false,
+            complete: (out) => {
+              if (out?.errors?.length){
+                // Keep going if there are minor issues; reject only if no rows.
+                const nonTrivial = out.errors.filter(e => e?.type !== "FieldMismatch" && e?.code !== "TooFewFields");
+                if (!out.data?.length) return reject(new Error(nonTrivial[0]?.message || out.errors[0]?.message || "CSV parse error"));
+              }
+              resolve(out.data || []);
+            },
+            error: (err) => reject(err),
+          });
+        });
+      }
+
+      function withCacheBust(url){
+        const u = String(url || "").trim();
+        if (!u) return u;
+        const sep = u.includes("?") ? "&" : "?";
+        return u + sep + "_ts=" + Date.now();
+      }
+
+      async function loadFromUrlExcel(url){
+        const finalUrl = withCacheBust(url);
+        setLoadState("warn", "Loading…", "Fetching CSV…");
+
+        const res = await fetch(finalUrl, { cache: "no-store" });
+        if (!res.ok){
+          throw new Error(`Failed to fetch CSV (${res.status} ${res.statusText})`);
+        }
+
+        const csvText = await res.text();
+        const data = await new Promise((resolve, reject) => {
+          Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: false,
+            transformHeader: (h) => norm(h),
+            transform: (v) => norm(v ?? ""),
+            complete: (out) => {
+              if (out?.errors?.length){
+                // Keep going if there are minor issues; reject only if no rows.
+                const nonTrivial = out.errors.filter(e => e?.type !== "FieldMismatch" && e?.code !== "TooFewFields");
+                if (!out.data?.length) return reject(new Error(nonTrivial[0]?.message || out.errors[0]?.message || "CSV parse error"));
+              }
+              resolve(out.data || []);
+            },
+            error: (err) => reject(err),
+          });
+        });
+
+        return { data, source: `CSV` };
+      }
+
+      // ---------- Filters ----------
+      function populateFilters(){
+        const regions = [...countBy(rows, r => val(r, COL.region)).keys()].sort();
+        const statuses = [...countBy(rows, r => val(r, COL.status)).keys()].sort();
+        const createdFrom = [...countBy(rows, r => val(r, COL.createdFrom)).keys()].sort();
+        const outlets = [...countBy(rows, r => val(r, COL.outlet)).keys()].sort();
+
+        setSelectOptions(el.fRegion, regions);
+        setSelectOptions(el.fStatus, statuses);
+        setSelectOptions(el.fCreatedFrom, createdFrom);
+        setSelectOptions(el.fOutlet, outlets);
+      }
+
+      function applyFilters(){
+        const selRegion = new Set(selectedValues(el.fRegion));
+        const selStatus = new Set(selectedValues(el.fStatus));
+        const selCreated = new Set(selectedValues(el.fCreatedFrom));
+        const selOutlet = new Set(selectedValues(el.fOutlet));
+        const q = norm(el.q.value).toLowerCase();
+
+        const hasAny =
+          selRegion.size || selStatus.size || selCreated.size || selOutlet.size || q;
+
+        filtered = rows.filter(r => {
+          const rRegion = emptyToLabel(val(r, COL.region));
+          const rStatus = emptyToLabel(val(r, COL.status));
+          const rCreated = emptyToLabel(val(r, COL.createdFrom));
+          const rOutlet = emptyToLabel(val(r, COL.outlet));
+
+          if (selRegion.size && !selRegion.has(rRegion)) return false;
+          if (selStatus.size && !selStatus.has(rStatus)) return false;
+          if (selCreated.size && !selCreated.has(rCreated)) return false;
+          if (selOutlet.size && !selOutlet.has(rOutlet)) return false;
+
+          if (q){
+            const hay = [
+              val(r, COL.stockistName),
+              val(r, COL.stockistCode),
+              val(r, COL.companyCustomerCode),
+              val(r, COL.customerCode),
+              val(r, COL.customerName),
+              val(r, COL.salesman),
+              val(r, COL.status),
+              val(r, COL.nob),
+              val(r, COL.outlet),
+              val(r, COL.soCode),
+              val(r, COL.createdFrom),
+              val(r, COL.createdBy),
+            ].join(" ").toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+
+          return true;
+        });
+
+        const parts = [];
+        if (selRegion.size) parts.push("Region: " + selRegion.size);
+        if (selStatus.size) parts.push("Status: " + selStatus.size);
+        if (selCreated.size) parts.push("Created From: " + selCreated.size);
+        if (selOutlet.size) parts.push("Outlet: " + selOutlet.size);
+        if (q) parts.push("Search: \"" + el.q.value + "\"");
+
+        el.filterSummary.textContent = hasAny ? ("Filters applied — " + parts.join(" · ")) : "No filters applied.";
+      }
+
+      // ---------- KPIs ----------
+      function buildKpis(){
+        const total = filtered.length;
+        const uniqStockists = uniqCount(filtered.map(r => val(r, COL.stockistCode)));
+        const uniqSalesmen = uniqCount(filtered.map(r => val(r, COL.salesman)));
+        const uniqCompanyCustomer = uniqCount(filtered.map(r => val(r, COL.companyCustomerCode)));
+
+        const rejected = filtered.filter(r => isRejected(val(r, COL.status))).length;
+        const waiting = filtered.filter(r => isWaiting(val(r, COL.status))).length;
+
+        const dupChecked = filtered.filter(r => hasDateLike(val(r, COL.dupCheckDate))).length;
+        const zsmDecided = filtered.filter(r => hasDateLike(val(r, COL.zsmDecisionDate))).length;
+        const centralDecided = filtered.filter(r => hasDateLike(val(r, COL.centralDecisionDate))).length;
+
+        const missingCustomerCode = filtered.filter(r => !val(r, COL.customerCode)).length;
+        const missingCustomerName = filtered.filter(r => !val(r, COL.customerName)).length;
+
+        const exceptions = filtered.filter(r => !!val(r, COL.exception)).length;
+        const remarksFilled = filtered.filter(r => !!val(r, COL.remarks)).length;
+
+        const topRegion = topNCountBy(filtered, r => val(r, COL.region), 1)[0] || ["—", 0];
+        const topStockist = topNCountBy(filtered, r => val(r, COL.stockistName) || val(r, COL.stockistCode), 1)[0] || ["—", 0];
+        const topSalesman = topNCountBy(filtered, r => val(r, COL.salesman), 1)[0] || ["—", 0];
+
+        const cards = [
+          { label:"Total requests", value: fmtInt(total), sub:"Rows in current view.", trend: "All rows" },
+          { label:"Unique stockists", value: fmtInt(uniqStockists), sub:"Distinct Stockist Code.", trend: "De-dup by code" },
+          { label:"Unique company-customer codes", value: fmtInt(uniqCompanyCustomer), sub:"Distinct Company Customer Code.", trend: "De-dup by company code" },
+          { label:"Unique salesmen", value: fmtInt(uniqSalesmen), sub:"Distinct SalesmanName.", trend: "Coverage" },
+
+          { label:"Rejected", value: fmtInt(rejected), sub: fmtPct(rejected / Math.max(1,total)) + " of requests.", trend: "Status contains \"reject\"" },
+          { label:"Waiting / pending", value: fmtInt(waiting), sub: fmtPct(waiting / Math.max(1,total)) + " of requests.", trend: "Status contains \"waiting\"/\"pending\"" },
+          { label:"Duplicacy checked", value: fmtInt(dupChecked), sub: fmtPct(dupChecked / Math.max(1,total)) + " have CMC check date.", trend: "CMC DuplicacyCheckDate present" },
+          { label:"Central decided", value: fmtInt(centralDecided), sub: fmtPct(centralDecided / Math.max(1,total)) + " have central decision date.", trend: "CentralUserApprovedOrRejectDate present" },
+
+          { label:"ZSM decided", value: fmtInt(zsmDecided), sub: fmtPct(zsmDecided / Math.max(1,total)) + " have ZSM decision date.", trend: "ZSM ApprovedOrRejectDate present" },
+          { label:"Missing Customer Code", value: fmtInt(missingCustomerCode), sub: fmtPct(missingCustomerCode / Math.max(1,total)) + " blank Customer Code.", trend: "Data quality" },
+          { label:"Missing Customer Name", value: fmtInt(missingCustomerName), sub: fmtPct(missingCustomerName / Math.max(1,total)) + " blank Customer Name.", trend: "Data quality" },
+          { label:"Exceptions / remarks", value: fmtInt(exceptions) + " / " + fmtInt(remarksFilled), sub:"Non-empty Exception / Remarks.", trend: "Signal for review" },
+
+          { label:"Top Region", value: clipLabel(topRegion[0], 20), sub: fmtInt(topRegion[1]) + " requests.", trend: "By count" },
+          { label:"Top Stockist", value: clipLabel(topStockist[0], 20), sub: fmtInt(topStockist[1]) + " requests.", trend: "By count" },
+          { label:"Top Salesman", value: clipLabel(topSalesman[0], 20), sub: fmtInt(topSalesman[1]) + " requests.", trend: "By count" },
+        ];
+
+        el.kpiGrid.innerHTML = "";
+        for (const c of cards){
+          const d = document.createElement("div");
+          d.className = "kpi";
+          d.innerHTML = `
+            <div class="label">
+              <span>${escapeHtml(c.label)}</span>
+              <span class="trend">${escapeHtml(c.trend || "")}</span>
+            </div>
+            <div class="value">${escapeHtml(c.value)}</div>
+            <div class="sub">${escapeHtml(c.sub || "")}</div>
+          `;
+          el.kpiGrid.appendChild(d);
+        }
+      }
+
+      // ---------- Charts ----------
+      function renderCharts(){
+        // Status doughnut (all categories)
+        const statusMap = countBy(filtered, r => val(r, COL.status));
+        const statusEntries = [...statusMap.entries()].sort((a,b)=>b[1]-a[1]);
+        const statusLabels = statusEntries.map(e => e[0]);
+        const statusData = statusEntries.map(e => e[1]);
+        const statusColors = statusLabels.map((_,i)=>colorRamp(i));
+
+        destroyChart(charts.status);
+        charts.status = new Chart(el.cStatus, {
+          type: "doughnut",
+          data: { labels: statusLabels, datasets: [{ data: statusData, backgroundColor: statusColors, borderColor: "rgba(255,255,255,.08)", borderWidth: 1 }] },
+          options: chartBaseOptions({
+            plugins: { legend: { position: "bottom", labels: { color: "rgba(255,255,255,.82)", boxWidth: 10 } } }
+          })
+        });
+
+        // Region bar (top 10)
+        const regionEntries = topNCountBy(filtered, r => val(r, COL.region), 10);
+        destroyChart(charts.region);
+        charts.region = new Chart(el.cRegion, {
+          type: "bar",
+          data: {
+            labels: regionEntries.map(e => e[0]),
+            datasets: [{ label: "Requests", data: regionEntries.map(e => e[1]), backgroundColor: "rgba(124,58,237,.55)", borderColor: "rgba(124,58,237,.9)", borderWidth: 1 }]
+          },
+          options: chartBaseOptions({
+            scales: axisScales(),
+            plugins: { legend: { display: false } }
+          })
+        });
+
+        // Nature of business bar (top 10)
+        const nobEntries = topNCountBy(filtered, r => val(r, COL.nob), 10);
+        destroyChart(charts.nob);
+        charts.nob = new Chart(el.cNob, {
+          type: "bar",
+          data: {
+            labels: nobEntries.map(e => clipLabel(e[0], 30)),
+            datasets: [{ label: "Requests", data: nobEntries.map(e => e[1]), backgroundColor: "rgba(34,197,94,.45)", borderColor: "rgba(34,197,94,.85)", borderWidth: 1 }]
+          },
+          options: chartBaseOptions({
+            scales: axisScales(),
+            plugins: { legend: { display: false } }
+          })
+        });
+
+        // Outlet doughnut (top 10; rest aggregated)
+        const outletMap = countBy(filtered, r => val(r, COL.outlet));
+        const outletEntriesAll = [...outletMap.entries()].sort((a,b)=>b[1]-a[1]);
+        const top = outletEntriesAll.slice(0,10);
+        const rest = outletEntriesAll.slice(10).reduce((s, e)=>s+e[1], 0);
+        const outLabels = top.map(e => e[0]).concat(rest ? ["(Other)"] : []);
+        const outData = top.map(e => e[1]).concat(rest ? [rest] : []);
+        const outColors = outLabels.map((_,i)=>colorRamp(i+2));
+
+        destroyChart(charts.outlet);
+        charts.outlet = new Chart(el.cOutlet, {
+          type: "doughnut",
+          data: { labels: outLabels, datasets: [{ data: outData, backgroundColor: outColors, borderColor: "rgba(255,255,255,.08)", borderWidth: 1 }] },
+          options: chartBaseOptions({
+            plugins: { legend: { position: "bottom", labels: { color: "rgba(255,255,255,.82)", boxWidth: 10 } } }
+          })
+        });
+      }
+
+      function chartBaseOptions(extra){
+        const base = {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 450 },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const v = ctx.parsed;
+                  const total = ctx.dataset.data.reduce((a,b)=>a+b,0) || 1;
+                  const pct = v / total;
+                  return ` ${ctx.label}: ${fmtInt(v)} (${fmtPct(pct)})`;
+                }
+              }
+            },
+            legend: {
+              labels: { color: "rgba(255,255,255,.78)" }
+            }
+          }
+        };
+        return deepMerge(base, extra || {});
+      }
+
+      function axisScales(){
+        return {
+          x: { ticks: { color: "rgba(255,255,255,.70)" }, grid: { color: "rgba(255,255,255,.06)" } },
+          y: { ticks: { color: "rgba(255,255,255,.70)" }, grid: { color: "rgba(255,255,255,.06)" }, beginAtZero: true }
+        };
+      }
+
+      function deepMerge(a,b){
+        const out = Array.isArray(a) ? [...a] : { ...a };
+        for (const [k,v] of Object.entries(b || {})){
+          if (v && typeof v === "object" && !Array.isArray(v) && typeof out[k] === "object" && out[k] && !Array.isArray(out[k])){
+            out[k] = deepMerge(out[k], v);
+          } else {
+            out[k] = v;
+          }
+        }
+        return out;
+      }
+
+      // ---------- Table + DQ ----------
+      function renderTable(){
+        const cols = [
+          COL.region,
+          COL.stockistCode,
+          COL.stockistName,
+          COL.companyCustomerCode,
+          COL.customerCode,
+          COL.customerName,
+          COL.salesman,
+          COL.soCode,
+          COL.status,
+          COL.nob,
+          COL.outlet,
+          COL.createdFrom,
+          COL.createdBy,
+          COL.createdDate,
+          COL.remarks,
+          COL.exception,
+        ];
+
+        el.tblHead.innerHTML = cols.map(c => `<th title="${escapeAttr(c)}">${escapeHtml(c)}</th>`).join("");
+
+        el.tblBody.innerHTML = filtered.map(r => {
+          const status = emptyToLabel(val(r, COL.status));
+          const badgeClass = isRejected(status) ? "bad" : isWaiting(status) ? "warn" : "good";
+          return `<tr>` + cols.map(c => {
+            const raw = val(r, c);
+            let shown = raw;
+            if (c === COL.status){
+              shown = `<span class="badge ${badgeClass}" title="${escapeAttr(status)}">${escapeHtml(status)}</span>`;
+              return `<td>${shown}</td>`;
+            }
+            return `<td title="${escapeAttr(raw)}">${escapeHtml(raw || "")}</td>`;
+          }).join("") + `</tr>`;
+        }).join("");
+
+        el.tableCount.textContent = `${fmtInt(filtered.length)} filtered rows`;
+      }
+
+      function renderDataQuality(){
+        const total = filtered.length || 1;
+        const missingCustomerCode = filtered.filter(r => !val(r, COL.customerCode)).length;
+        const missingCustomerName = filtered.filter(r => !val(r, COL.customerName)).length;
+        const missingStockist = filtered.filter(r => !val(r, COL.stockistCode) && !val(r, COL.stockistName)).length;
+
+        const dupKeyMap = new Map();
+        for (const r of filtered){
+          const k = safeRowKey(r);
+          dupKeyMap.set(k, (dupKeyMap.get(k) || 0) + 1);
+        }
+        let suspectedDuplicates = 0;
+        for (const c of dupKeyMap.values()) if (c > 1) suspectedDuplicates += (c - 1);
+
+        const score = 1
+          - (0.45 * (missingCustomerName / total))
+          - (0.30 * (missingCustomerCode / total))
+          - (0.15 * (missingStockist / total))
+          - (0.10 * (suspectedDuplicates / total));
+        const clamped = Math.max(0, Math.min(1, score));
+
+        let level = "good";
+        if (clamped < 0.72) level = "warn";
+        if (clamped < 0.55) level = "bad";
+
+        el.dqBadge.className = "badge " + level;
+        el.dqBadge.textContent = "DQ " + fmtPct(clamped);
+        el.dqText.textContent =
+          `Missing Customer Name: ${fmtInt(missingCustomerName)} · Missing Customer Code: ${fmtInt(missingCustomerCode)} · Suspected duplicates: ${fmtInt(suspectedDuplicates)}`;
+      }
+
+      // ---------- Export ----------
+      function exportFilteredCsv(){
+        const csv = Papa.unparse(filtered, { quotes: false });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "filtered-data.csv";
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(a.href);
+        a.remove();
+      }
+
+      // ---------- Escaping ----------
+      function escapeHtml(s){
+        return String(s ?? "")
+          .replaceAll("&","&amp;")
+          .replaceAll("<","&lt;")
+          .replaceAll(">","&gt;")
+          .replaceAll('"',"&quot;")
+          .replaceAll("'","&#039;");
+      }
+      function escapeAttr(s){
+        return escapeHtml(s).replaceAll("\n"," ").replaceAll("\r"," ");
+      }
+
+      // ---------- Orchestration ----------
+      function refreshAll(){
+        applyFilters();
+        buildKpis();
+        renderCharts();
+        renderTable();
+        renderDataQuality();
+      }
+
+      function bindEvents(){
+        const onChange = () => refreshAll();
+        el.fRegion.addEventListener("change", onChange);
+        el.fStatus.addEventListener("change", onChange);
+        el.fCreatedFrom.addEventListener("change", onChange);
+        el.fOutlet.addEventListener("change", onChange);
+        el.q.addEventListener("input", debounce(onChange, 160));
+
+        el.btnReset.addEventListener("click", () => {
+          for (const s of [el.fRegion, el.fStatus, el.fCreatedFrom, el.fOutlet]){
+            for (const o of s.options) o.selected = false;
+          }
+          el.q.value = "";
+          refreshAll();
+        });
+
+        el.btnExport.addEventListener("click", () => exportFilteredCsv());
+        el.btnReload.addEventListener("click", async () => {
+          await loadAndRender(() => loadFromUrlExcel(DATA_URL));
+        });
+
+        window.addEventListener("resize", debounce(() => {
+          // chart.js handles responsive sizing; this forces a refresh on some browsers
+          for (const ch of Object.values(charts)) if (ch) ch.resize();
+        }, 200));
+      }
+
+      function debounce(fn, ms){
+        let t = null;
+        return (...args) => {
+          clearTimeout(t);
+          t = setTimeout(() => fn(...args), ms);
+        };
+      }
+
+      function validateColumns(sampleRow){
+        const missing = [];
+        for (const k of Object.values(COL)){
+          if (!(k in sampleRow)) missing.push(k);
+        }
+        return missing;
+      }
+
+      function normalizeRowKeys(r){
+        const out = {};
+        for (const [k,v] of Object.entries(r || {})){
+          out[norm(k)] = v;
+        }
+        return out;
+      }
+
+      async function loadAndRender(loader){
+        try{
+          const { data, source } = await loader();
+          if (!Array.isArray(data) || !data.length) throw new Error("No rows parsed from CSV");
+
+          const missing = validateColumns(normalizeRowKeys(data[0]));
+          if (missing.length){
+            setLoadState("bad", "Loaded but columns mismatch", `Missing columns: ${missing.slice(0, 6).join(", ")}${missing.length>6 ? "…" : ""}`);
+          } else {
+            setLoadState("ok", "Loaded", `${source} · ${fmtInt(data.length)} rows · ${nowStr()}`);
+          }
+
+          // Normalize: ensure all expected columns exist & values are trimmed strings
+          rows = data.map(r => {
+            const rr = normalizeRowKeys(r);
+            const out = {};
+            for (const c of Object.values(COL)){
+              out[c] = norm(rr?.[c]);
+            }
+            // keep any extra columns too (future-safe)
+            for (const [k,v] of Object.entries(rr || {})){
+              if (!(k in out)) out[k] = norm(v);
+            }
+            return out;
+          });
+
+          populateFilters();
+          refreshAll();
+        } catch (err){
+          console.error(err);
+          // Keep UI concise: show only one failure message.
+          // Full error details remain in the console.
+          setLoadState("bad", "Load failed", "");
+        }
+      }
+
+      // ---------- Password Gate + Boot ----------
+      const DASH_PASSWORD = "Nishi@2026";
+      const AUTH_KEY = "dashboard_authed_v1";
+      let dashboardStarted = false;
+
+      function startDashboard(){
+        if (dashboardStarted) return;
+        dashboardStarted = true;
+        bindEvents();
+        setLoadState("warn", "Loading…", "Fetching CSV…");
+        loadAndRender(() => loadFromUrlExcel(DATA_URL));
+      }
+
+      function showApp(){
+        const gate = document.getElementById("authGate");
+        const app = document.getElementById("appWrap");
+        if (gate) gate.style.display = "none";
+        if (app) app.style.display = "";
+        startDashboard();
+      }
+
+      function showAuth(){
+        const gate = document.getElementById("authGate");
+        const app = document.getElementById("appWrap");
+        if (gate) gate.style.display = "";
+        if (app) app.style.display = "none";
+      }
+
+      function setAuthError(msg){
+        const e = document.getElementById("authErr");
+        if (!e) return;
+        e.textContent = msg || "Incorrect password.";
+        e.style.display = msg ? "" : "none";
+      }
+
+      function isAuthed(){
+        return sessionStorage.getItem(AUTH_KEY) === "1";
+      }
+
+      function setAuthed(){
+        sessionStorage.setItem(AUTH_KEY, "1");
+      }
+
+      (function boot(){
+        const form = document.getElementById("authForm");
+        const pwd = document.getElementById("authPwd");
+        if (form && pwd){
+          form.addEventListener("submit", (ev) => {
+            ev.preventDefault();
+            const entered = norm(pwd.value);
+            if (entered === DASH_PASSWORD){
+              setAuthed();
+              setAuthError("");
+              pwd.value = "";
+              showApp();
+            } else {
+              setAuthError("Incorrect password.");
+              pwd.focus();
+              pwd.select?.();
+            }
+          });
+        }
+
+        if (isAuthed()){
+          showApp();
+        } else {
+          showAuth();
+          pwd?.focus?.();
+        }
+      })();
+    </script>
+  </body>
+</html>
